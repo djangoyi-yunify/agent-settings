@@ -140,20 +140,20 @@ phase2-service-discovery
 | 迭代 | change 名称 | GitHub Issue | 状态 |
 |---|---|---|---|
 | 总控 | `redis-7-master-plan` | #223 | 已创建（OPEN） |
-| 0 | `redis-7-phase0-skeleton` | #329 | 已创建 |
-| 1 | `redis-7-phase1-bootstrap` | #330 | 已创建 |
-| 2 | `redis-7-phase2-service-discovery` | #331 | 已创建 |
-| 3 | `redis-7-phase3-scaling` | #332 | 已创建 |
-| 4 | `redis-7-phase4-reconfigure` | #333 | 已创建 |
-| 5 | `redis-7-phase5-failover` | #334 | 已创建 |
-| 6 | `redis-7-phase6-account-management` | #339 | 已创建 |
-| 7 | `redis-7-phase7-docs-examples` | #335 | 已创建 |
+| 0 | `redis-7-phase0-skeleton` | #329 | 已创建（OPEN） |
+| 1 | `redis-7-phase1-bootstrap` | #330 | 已创建（OPEN） |
+| 2 | `redis-7-phase2-service-discovery` | #331 | 已创建（OPEN） |
+| 3 | `redis-7-phase3-scaling` | #332 | 已创建（OPEN） |
+| 4 | `redis-7-phase4-reconfigure` | #333 | 已创建（OPEN） |
+| 5 | `redis-7-phase5-failover` | #334 | 已创建（OPEN） |
+| 6 | `redis-7-phase6-account-management` | #339 | 已创建（OPEN） |
+| 7 | `redis-7-phase7-docs-examples` | #335 | 已创建（OPEN） |
 
 ### 7.2 Issue 内容模板
 
 #### 顶层 issue（总控）
 
-- **标题**：`Redis 7 AppPack 实施路线图`
+- **标题**：`feat(redis-7): Redis 7 AppPack 实施计划`
 - **标签**：`redis`, `apppack`, `roadmap`
 - **正文**：
   - 项目背景与范围
@@ -163,7 +163,7 @@ phase2-service-discovery
 
 #### 阶段 issue
 
-- **标题**：`Redis 7 AppPack <阶段名>`，例如 `Redis 7 AppPack 基础骨架搭建`
+- **标题**：`feat(redis-7): <阶段目标>`，例如 `feat(redis-7): 搭建 Redis 7 AppPack 基础骨架`
 - **标签**：`redis`, `apppack`, `implementation`
 - **正文**：
   - 本阶段目标
