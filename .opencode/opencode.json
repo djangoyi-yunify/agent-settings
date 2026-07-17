@@ -1,0 +1,13 @@
+{
+    "$schema": "https://opencode.ai/config.json",
+    "references": {
+        "kubesphere-extensions-koda": {
+            "repository": "kubesphere-extensions/koda-apppacks",
+            "branch": "main",
+            "description": "用于 koda-apppacks 项目的调研"
+        }
+    },
+    "instructions": [
+        ".opencode/agent-rules/git.md"
+    ]
+}
