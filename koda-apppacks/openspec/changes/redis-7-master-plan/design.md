@@ -11,7 +11,7 @@ Redis 7 AppPack 实施拆分为多个独立 change：
 redis-7-master-plan
         │
         ├──▶ redis-7-phase0-skeleton
-        │           └── 迭代 1-5 的基础依赖
+        │           └── 迭代 1-6 的基础依赖
         │
         ├──▶ redis-7-phase1-bootstrap
         │           └── 依赖：phase0-skeleton
@@ -19,8 +19,11 @@ redis-7-master-plan
         ├──▶ redis-7-phase2-service-discovery
         │           └── 依赖：phase1-bootstrap
         │
-        ├──▶ redis-7-phase3-scaling
+        ├──▶ redis-7-phase6-account-management
         │           └── 依赖：phase2-service-discovery
+        │
+        ├──▶ redis-7-phase3-scaling
+        │           └── 依赖：phase2-service-discovery、phase6-account-management
         │
         ├──▶ redis-7-phase4-reconfigure
         │           └── 依赖：phase2-service-discovery
@@ -29,8 +32,8 @@ redis-7-master-plan
         │           └── 依赖：phase2-service-discovery
         │
         └──▶ redis-7-phase7-docs-examples
-                    └── 依赖：phase1-bootstrap、phase3-scaling、
-                        phase4-reconfigure、phase5-failover
+                    └── 依赖：phase1-bootstrap、phase3-scaling、phase4-reconfigure、
+                        phase5-failover、phase6-account-management
 ```
 
 ## 2. 阶段 change 清单
@@ -40,12 +43,11 @@ redis-7-master-plan
 | 0 | `redis-7-phase0-skeleton` | 搭建最小可运行可测试的 chart 与 CRD 骨架 | 设计文档 | 可渲染 chart、可 apply 的空壳 CRD、测试入口 | 无 |
 | 1 | `redis-7-phase1-bootstrap` | Server 与 Sentinel 在首次创建时能独立启动并形成复制拓扑（Pod 重启场景 deferred） | phase0 骨架 | 启动脚本、ACL 初始化、运行时配置生成 | phase0 |
 | 2 | `redis-7-phase2-service-discovery` | 角色感知、健康探测、服务注册与导出 | phase1 bootstrap | roleProbe、availableProbe、postProvision、services | phase1 |
-| 3 | `redis-7-phase3-scaling` | Server 水平扩缩容 | phase2 服务发现 | memberJoin sync-acl、扩缩容 OpsTask | phase2 |
+| 3 | `redis-7-phase3-scaling` | Server 水平扩缩容 | phase2 服务发现、phase6 账号管理 | memberJoin sync-acl、扩缩容 OpsTask | phase2、phase6 |
 | 4 | `redis-7-phase4-reconfigure` | Server 参数热更新 | phase2 服务发现 | reconfigure 脚本、热更新参数清单 | phase2 |
 | 5 | `redis-7-phase5-failover` | 计划内切换与自动故障转移 | phase2 服务发现 | switchover 脚本、failover 验证 | phase2 |
-| 7 | `redis-7-phase7-docs-examples` | 示例整理与文档编写 | phase1/3/4/5 | README、Application 示例、OpsTask 示例 | phase1/3/4/5 |
-
-注：迭代 6（账号管理 / accountProvision）本期 deferred，因此阶段清单从迭代 5 直接跳到迭代 7。
+| 6 | `redis-7-phase6-account-management` | 业务账号管理（accountProvision） | phase2 服务发现 | accountProvision 脚本、业务账号声明 | phase2 |
+| 7 | `redis-7-phase7-docs-examples` | 示例整理与文档编写 | phase1/3/4/5/6 | README、Application 示例、OpsTask 示例、账号管理示例 | phase1/3/4/5/6 |
 
 ## 3. 阶段 4 与阶段 5 的并行性
 
@@ -55,6 +57,9 @@ redis-7-master-plan
 ```
 phase2-service-discovery
         │
+        ├──▶ phase6-account-management
+        │         │
+        │         ▼
         ├──▶ phase3-scaling
         │
         ├──▶ phase4-reconfigure
@@ -85,6 +90,7 @@ phase2-service-discovery
 | phase3-scaling | scaling |
 | phase4-reconfigure | reconfigure |
 | phase5-failover | failover |
+| phase6-account-management | account-management |
 | phase7-docs-examples | examples |
 
 所有阶段 change 都应在 delta spec 中引用 topology 约束。
@@ -96,12 +102,13 @@ phase2-service-discovery
 | 阶段 | change 名称 | 状态 | 备注 |
 |---|---|---|---|
 | 0 | `redis-7-phase0-skeleton` | 待开始 | |
-| 1 | `redis-7-phase1-bootstrap` | 待开始 | 依赖 phase0 |
+| 1 | `redis-7-phase1-bootstrap` | 已创建 | 依赖 phase0 |
 | 2 | `redis-7-phase2-service-discovery` | 待开始 | 依赖 phase1 |
-| 3 | `redis-7-phase3-scaling` | 待开始 | 依赖 phase2 |
+| 3 | `redis-7-phase3-scaling` | 待开始 | 依赖 phase2、phase6 |
 | 4 | `redis-7-phase4-reconfigure` | 待开始 | 依赖 phase2 |
 | 5 | `redis-7-phase5-failover` | 待开始 | 依赖 phase2 |
-| 7 | `redis-7-phase7-docs-examples` | 待开始 | 依赖 phase1/3/4/5 |
+| 6 | `redis-7-phase6-account-management` | 待开始 | 依赖 phase2 |
+| 7 | `redis-7-phase7-docs-examples` | 待开始 | 依赖 phase1/3/4/5/6 |
 
 状态说明：
 - 待开始：尚未创建 change 或尚未开始实施
@@ -135,6 +142,7 @@ phase2-service-discovery
 | 3 | `redis-7-phase3-scaling` | #332 | 已创建 |
 | 4 | `redis-7-phase4-reconfigure` | #333 | 已创建 |
 | 5 | `redis-7-phase5-failover` | #334 | 已创建 |
+| 6 | `redis-7-phase6-account-management` | #339 | 已创建 |
 | 7 | `redis-7-phase7-docs-examples` | #335 | 已创建 |
 
 ### 7.2 Issue 内容模板
