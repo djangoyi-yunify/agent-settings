@@ -38,7 +38,7 @@ redis-7-master-plan
 | 迭代 | change 名称 | 目标 | 关键输入 | 关键输出 | 依赖 |
 |---|---|---|---|---|---|
 | 0 | `redis-7-phase0-skeleton` | 搭建最小可运行可测试的 chart 与 CRD 骨架 | 设计文档 | 可渲染 chart、可 apply 的空壳 CRD、测试入口 | 无 |
-| 1 | `redis-7-phase1-bootstrap` | Server 与 Sentinel 能独立启动并形成复制拓扑 | phase0 骨架 | 启动脚本、ACL 初始化、运行时配置生成 | phase0 |
+| 1 | `redis-7-phase1-bootstrap` | Server 与 Sentinel 在首次创建时能独立启动并形成复制拓扑（Pod 重启场景 deferred） | phase0 骨架 | 启动脚本、ACL 初始化、运行时配置生成 | phase0 |
 | 2 | `redis-7-phase2-service-discovery` | 角色感知、健康探测、服务注册与导出 | phase1 bootstrap | roleProbe、availableProbe、postProvision、services | phase1 |
 | 3 | `redis-7-phase3-scaling` | Server 水平扩缩容 | phase2 服务发现 | memberJoin sync-acl、扩缩容 OpsTask | phase2 |
 | 4 | `redis-7-phase4-reconfigure` | Server 参数热更新 | phase2 服务发现 | reconfigure 脚本、热更新参数清单 | phase2 |
@@ -62,11 +62,22 @@ phase2-service-discovery
         └──▶ phase5-failover
 ```
 
-## 4. 顶层规格引用
+## 4. 规格工作流
 
-各阶段 change 通过 delta spec 引用 `openspec/specs/redis-7/` 下的能力规格：
+本项目采用 OpenSpec 常规工作流：
 
-| 阶段 change | 主要引用的 capability |
+1. 每个阶段 change 创建自己的 delta spec（`openspec/changes/<change>/specs/redis-7/<capability>.md`）
+2. change 实施完成后，通过 `openspec archive` 将 delta spec 合并到主规格（`openspec/specs/redis-7/`）
+3. 主规格随各阶段 change 的完成逐步填充，而不是预先写完整
+
+### 当前状态
+
+- `openspec/specs/redis-7/` 当前为空，等待各阶段 change archive 后填充
+- 设计草案已备份到 `/tmp/redis-7-specs-draft/`，供创建 change 时参考
+
+### 各阶段 change 的 delta spec 规划
+
+| 阶段 change | 主要生成的 capability delta |
 |---|---|
 | phase0-skeleton | 无（只搭骨架） |
 | phase1-bootstrap | bootstrap |
@@ -76,7 +87,7 @@ phase2-service-discovery
 | phase5-failover | failover |
 | phase7-docs-examples | examples |
 
-所有阶段 change 都应引用 `topology.md` 中的拓扑约束。
+所有阶段 change 都应在 delta spec 中引用 topology 约束。
 
 ## 5. 状态追踪
 
