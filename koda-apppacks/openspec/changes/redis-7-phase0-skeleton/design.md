@@ -85,7 +85,7 @@ name: redis-7
 description: Koda Redis 7.2 AppPack chart
 type: application
 version: 0.1.0
-appVersion: "7.2.7"
+appVersion: "7.2.14"
 ```
 
 ### values.yaml
@@ -94,7 +94,7 @@ appVersion: "7.2.7"
 nameOverride: redis-7
 
 images:
-  redis: redis:7.2.7
+  redis: redis:7.2.14
   redisExporter: oliver006/redis_exporter:v1.55.0
 ```
 
@@ -130,7 +130,7 @@ images:
 
 ### ComponentMatrix
 
-- 声明版本 `7.2.7` 到镜像的映射。
+- 声明版本 `7.2.14` 到镜像的映射。
 
 ### AppPack
 
