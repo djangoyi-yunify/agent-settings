@@ -11,7 +11,7 @@ Redis 7 AppPack 实施拆分为多个独立 change：
 redis-7-master-plan
         │
         ├──▶ redis-7-phase0-skeleton
-        │           └── 迭代 1-6 的基础依赖
+        │           └── 迭代 1-7 的基础依赖
         │
         ├──▶ redis-7-phase1-bootstrap
         │           └── 依赖：phase0-skeleton
@@ -19,16 +19,16 @@ redis-7-master-plan
         ├──▶ redis-7-phase2-service-discovery
         │           └── 依赖：phase1-bootstrap
         │
-        ├──▶ redis-7-phase6-account-management
-        │           └── 依赖：phase2-service-discovery
-        │
         ├──▶ redis-7-phase3-scaling
-        │           └── 依赖：phase2-service-discovery、phase6-account-management
+        │           └── 依赖：phase2-service-discovery
         │
         ├──▶ redis-7-phase4-reconfigure
         │           └── 依赖：phase2-service-discovery
         │
         ├──▶ redis-7-phase5-failover
+        │           └── 依赖：phase2-service-discovery
+        │
+        ├──▶ redis-7-phase6-account-management
         │           └── 依赖：phase2-service-discovery
         │
         └──▶ redis-7-phase7-docs-examples
@@ -43,35 +43,39 @@ redis-7-master-plan
 | 0 | `redis-7-phase0-skeleton` | 搭建最小可运行可测试的 chart 与 CRD 骨架 | 设计文档 | 可渲染 chart、可 apply 的空壳 CRD、测试入口 | 无 |
 | 1 | `redis-7-phase1-bootstrap` | Server 与 Sentinel 在首次创建时能独立启动并形成复制拓扑（Pod 重启场景 deferred） | phase0 骨架 | 启动脚本、ACL 初始化、运行时配置生成 | phase0 |
 | 2 | `redis-7-phase2-service-discovery` | 角色感知、健康探测、服务注册与导出 | phase1 bootstrap | roleProbe、availableProbe、postProvision、services | phase1 |
-| 3 | `redis-7-phase3-scaling` | Server 水平扩缩容 | phase2 服务发现、phase6 账号管理 | memberJoin sync-acl、扩缩容 OpsTask | phase2、phase6 |
+| 3 | `redis-7-phase3-scaling` | Server 水平扩缩容 | phase2 服务发现 | memberJoin、扩缩容 OpsTask | phase2 |
 | 4 | `redis-7-phase4-reconfigure` | Server 参数热更新 | phase2 服务发现 | reconfigure 脚本、热更新参数清单 | phase2 |
 | 5 | `redis-7-phase5-failover` | 计划内切换与自动故障转移 | phase2 服务发现 | switchover 脚本、failover 验证 | phase2 |
 | 6 | `redis-7-phase6-account-management` | 业务账号管理（accountProvision） | phase2 服务发现 | accountProvision 脚本、业务账号声明 | phase2 |
 | 7 | `redis-7-phase7-docs-examples` | 示例整理与文档编写 | phase1/3/4/5/6 | README、Application 示例、OpsTask 示例、账号管理示例 | phase1/3/4/5/6 |
 
-## 3. 阶段 4 与阶段 5 的并行性
+## 3. 阶段 3、4、5、6 的依赖关系
 
-`redis-7-phase4-reconfigure` 和 `redis-7-phase5-failover` 都依赖 `redis-7-phase2-service-discovery`，
-但彼此之间没有强依赖，可以并行开发。
+`redis-7-phase4-reconfigure`、`redis-7-phase5-failover` 和 `redis-7-phase6-account-management`
+都依赖 `redis-7-phase2-service-discovery`，但彼此之间没有强依赖，可以并行开发。
+
+`redis-7-phase3-scaling` 原本计划依赖 `redis-7-phase6-account-management`（新副本加入时需要同步业务账号），
+但业务账号管理已 deferred 到迭代 6。为避免核心扩缩容能力被阻塞，
+scaling 只依赖 service-discovery；业务账号在 scale-out 时的同步作为后续增强项，
+在 phase6 完成后通过小版本迭代补充。
 
 ```
 phase2-service-discovery
         │
-        ├──▶ phase6-account-management
-        │         │
-        │         ▼
         ├──▶ phase3-scaling
         │
         ├──▶ phase4-reconfigure
         │
-        └──▶ phase5-failover
+        ├──▶ phase5-failover
+        │
+        └──▶ phase6-account-management
 ```
 
 ## 4. 规格工作流
 
 本项目采用 OpenSpec 常规工作流：
 
-1. 每个阶段 change 创建自己的 delta spec（`openspec/changes/<change>/specs/redis-7/<capability>.md`）
+1. 每个阶段 change 创建自己的 delta spec（`openspec/changes/<change>/specs/<capability>/spec.md`）
 2. change 实施完成后，通过 `openspec archive` 将 delta spec 合并到主规格（`openspec/specs/redis-7/`）
 3. 主规格随各阶段 change 的完成逐步填充，而不是预先写完整
 
@@ -84,7 +88,7 @@ phase2-service-discovery
 
 | 阶段 change | 主要生成的 capability delta |
 |---|---|
-| phase0-skeleton | 无（只搭骨架） |
+| phase0-skeleton | topology（最小拓扑命名约束） |
 | phase1-bootstrap | bootstrap |
 | phase2-service-discovery | service-discovery |
 | phase3-scaling | scaling |
@@ -101,13 +105,13 @@ phase2-service-discovery
 
 | 阶段 | change 名称 | 状态 | 备注 |
 |---|---|---|---|
-| 0 | `redis-7-phase0-skeleton` | 待开始 | |
-| 1 | `redis-7-phase1-bootstrap` | 已创建 | 依赖 phase0 |
+| 0 | `redis-7-phase0-skeleton` | 进行中 | planning artifacts 已完成，尚未开始实施 |
+| 1 | `redis-7-phase1-bootstrap` | 进行中 | planning artifacts 已完成，依赖 phase0 |
 | 2 | `redis-7-phase2-service-discovery` | 待开始 | 依赖 phase1 |
-| 3 | `redis-7-phase3-scaling` | 待开始 | 依赖 phase2、phase6 |
+| 3 | `redis-7-phase3-scaling` | 待开始 | 依赖 phase2 |
 | 4 | `redis-7-phase4-reconfigure` | 待开始 | 依赖 phase2 |
 | 5 | `redis-7-phase5-failover` | 待开始 | 依赖 phase2 |
-| 6 | `redis-7-phase6-account-management` | 待开始 | 依赖 phase2 |
+| 6 | `redis-7-phase6-account-management` | 进行中 | planning artifacts 已完成，依赖 phase2 |
 | 7 | `redis-7-phase7-docs-examples` | 待开始 | 依赖 phase1/3/4/5/6 |
 
 状态说明：
@@ -122,12 +126,12 @@ phase2-service-discovery
 |---|---|---|
 | 阶段 change 边界不清 | 中 | 每个 change 有明确的验收标准，避免范围蔓延 |
 | 跨阶段依赖导致阻塞 | 中 | 总控 change 持续追踪状态，及时调整优先级 |
-| Koda 跨组件 env 注入不支持 | 高 | phase2 服务发现前优先验证 credentialFieldRef 和 componentFieldRef |
+| Koda 跨组件 env 注入能力未充分验证 | 高 | phase2 服务发现前优先验证 credentialFieldRef、componentFieldRef 和 serviceDependencyFieldRef |
 | kind 环境无法模拟真实故障转移 | 中 | failover 测试在已有 k8s 集群上补充验证 |
 
 ## 7. GitHub Issue 跟踪
 
-本项目使用 GitHub issue 和 sub-issue 跟踪 Redis 7 AppPack 的实施计划和各阶段变更的概要、状态变化。
+本项目使用 GitHub issue 和 sub-issue 跟踪 Redis 7 AppPack 的实施计划和各阶段变更的概要、状态变化。为便于统一管理，koda 与 koda-apppacks 相关的 issue 均集中在 `kubesphere-extensions/koda` 仓库中处理。
 
 ### 7.1 Issue 与 change 的映射关系
 
@@ -135,7 +139,7 @@ phase2-service-discovery
 
 | 迭代 | change 名称 | GitHub Issue | 状态 |
 |---|---|---|---|
-| 总控 | `redis-7-master-plan` | #223 | 已创建 |
+| 总控 | `redis-7-master-plan` | #223 | 已创建（OPEN） |
 | 0 | `redis-7-phase0-skeleton` | #329 | 已创建 |
 | 1 | `redis-7-phase1-bootstrap` | #330 | 已创建 |
 | 2 | `redis-7-phase2-service-discovery` | #331 | 已创建 |
