@@ -21,6 +21,7 @@
         ".opencode/agent-rules/git.md",
         ".opencode/agent-rules/pr-issue.md",
         ".opencode/agent-rules/question.md",
-        ".opencode/agent-rules/testing.md"
+        ".opencode/agent-rules/testing.md",
+        ".opencode/agent-rules/cue.md"
     ]
 }
